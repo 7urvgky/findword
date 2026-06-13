@@ -89,9 +89,26 @@
                 margin: 0 !important;
             }
 
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
             /* 기존 브라우저 전용 메인 구조 완전 숨김 */
             header, footer, main, .no-print, #successModal, #toastContainer, #progressBadge, #menuDropdown, #editModal, #wordManagerModal {
                 display: none !important;
+            }
+
+            /* 인쇄용 배경 투명도 조절 */
+            .print-bg-layer {
+                display: block !important;
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                width: 100vw !important;
+                height: 100vh !important;
+                opacity: 0.1 !important; /* 배경 투명도 조절 (0.1 = 10%) */
+                z-index: -1 !important;
             }
 
             /* 세로형 인쇄 전용 메인 컨테이너 활성화 */
@@ -101,6 +118,7 @@
                 margin: 0 auto !important;
                 padding: 0 !important;
                 box-sizing: border-box !important;
+                background: transparent !important;
             }
 
             /* [개선] 테두리 여백 설계 및 이중 곡률 겹침 오류 차단 */
@@ -110,7 +128,7 @@
                 border: none !important;
                 padding: 2mm !important; 
                 box-sizing: border-box !important;
-                background: white !important;
+                background: transparent !important;
                 shrink: 0 !important;
             }
 
@@ -157,39 +175,86 @@
 </head>
 <body class="min-h-screen flex flex-col justify-between p-4 md:p-6 no-select text-gray-800 z-10">
 
-    <!-- 웹 화면 전용 백그라운드 일러스트 (공부/학습 테마 SVG 벡터 레이어) -->
-    <div class="absolute inset-0 pointer-events-none overflow-hidden z-0 no-print opacity-15">
-        <!-- 왼쪽 위: 연필과 책 -->
-        <svg class="absolute top-10 left-8 w-28 h-28 text-amber-950/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/>
-            <path d="M6 6h10M6 10h10M17 22V2"/>
+    <!-- 웹 화면 및 인쇄용 백그라운드 일러스트 (공부/학습 테마 SVG 벡터 레이어, 아이콘 개수 대폭 증가) -->
+    <div class="absolute inset-0 pointer-events-none overflow-hidden z-0 opacity-15 print-bg-layer">
+        <!-- 1. 책 (좌상단) -->
+        <svg class="absolute top-[5%] left-[5%] w-28 h-28 text-amber-950/40 -rotate-12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10M6 10h10M17 22V2"/>
         </svg>
-        <svg class="absolute top-44 left-24 w-16 h-16 text-amber-950/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+        
+        <!-- 2. 전구 (우상단) -->
+        <svg class="absolute top-[8%] right-[8%] w-24 h-24 text-amber-950/40 rotate-12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A5 5 0 0 0 8 8c0 1.3.5 2.6 1.5 3.5.8.8 1.3 1.5 1.5 2.5M9 18h6M10 22h4"/>
+        </svg>
+        
+        <!-- 3. 팔레트 (중앙상단) -->
+        <svg class="absolute top-[4%] left-[42%] w-20 h-20 text-amber-950/30 rotate-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/>
+        </svg>
+
+        <!-- 4. 플라스크 (좌측 중상단) -->
+        <svg class="absolute top-[22%] left-[22%] w-16 h-16 text-amber-950/30 -rotate-12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55a2 2 0 0 0 1.8 2.95h10.96a2 2 0 0 0 1.8-2.95L14.21 10.42a2 2 0 0 1-.21-.896V2"/><path d="M8.5 2h7"/><path d="M14 16H5.3"/>
+        </svg>
+
+        <!-- 5. 원자 기호 (우측 중상단) -->
+        <svg class="absolute top-[25%] right-[25%] w-20 h-20 text-amber-950/30 rotate-12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"/><ellipse cx="12" cy="12" rx="10" ry="3" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="3" transform="rotate(-60 12 12)"/>
+        </svg>
+
+        <!-- 6. 사과 (좌측 중앙) -->
+        <svg class="absolute top-[45%] left-[3%] w-16 h-16 text-amber-950/30 -rotate-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 20.94c1.5 0 2.75 1.06 4 1.06 3 0 6-8 6-12.22A4.91 4.91 0 0 0 17 5c-2.22 0-4 1.44-5 2-1-.56-2.78-2-5-2a4.9 4.9 0 0 0-5 4.78C2 14 5 22 8 22c1.25 0 2.5-1.06 4-1.06Z"/><path d="M10 2c1 .5 2 2 2 5"/>
+        </svg>
+
+        <!-- 7. 학사모 (우측 중앙) -->
+        <svg class="absolute top-[42%] right-[4%] w-20 h-20 text-amber-950/35 rotate-12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5"/>
+        </svg>
+
+        <!-- 8. 지구본 (우측 하단) -->
+        <svg class="absolute bottom-[35%] right-[5%] w-24 h-24 text-amber-950/30 -rotate-12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/>
+        </svg>
+
+        <!-- 9. 자 (좌측 하단) -->
+        <svg class="absolute bottom-[10%] left-[6%] w-24 h-24 text-amber-950/35 rotate-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 3a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2H5Z"/><path d="M3 7h3M3 11h5M3 15h3M7 3v3M11 3v5M15 3v3"/>
+        </svg>
+
+        <!-- 10. 음표 (좌측 중하단) -->
+        <svg class="absolute bottom-[30%] left-[5%] w-16 h-16 text-amber-950/40 rotate-12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
+        </svg>
+
+        <!-- 11. 계산기 (중앙 하단) -->
+        <svg class="absolute bottom-[5%] left-[45%] w-16 h-16 text-amber-950/35 -rotate-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+            <rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/>
+        </svg>
+
+        <!-- 12. 돋보기 (우하단 구석) -->
+        <svg class="absolute bottom-[8%] right-[8%] w-20 h-20 text-amber-950/40 -rotate-12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+        </svg>
+
+        <!-- 13. 별 모양 (좌측 1/3 지점) -->
+        <svg class="absolute bottom-[20%] left-[28%] w-12 h-12 text-amber-950/40 rotate-45" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m12 3-1.912 5.886H3.883l5.056 3.674L7.027 18.45 12 14.775l4.973 3.674-1.912-5.89 5.056-3.674h-6.205L12 3z"/>
+        </svg>
+
+        <!-- 14. 작은 연필 (우측 1/3 지점) -->
+        <svg class="absolute bottom-[22%] right-[25%] w-16 h-16 text-amber-950/35 -rotate-45" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
         </svg>
 
-        <!-- 왼쪽 아래: 자와 눈금 기호 -->
-        <svg class="absolute bottom-32 left-10 w-24 h-24 text-amber-950/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
-            <path d="M5 3a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2H5Z"/>
-            <path d="M3 7h3M3 11h5M3 15h3M7 3v3M11 3v5M15 3v3"/>
+        <!-- 15. 리본 메달 (정중앙 쯤 뒤편에 은은하게) -->
+        <svg class="absolute top-[60%] left-[50%] -translate-x-1/2 w-24 h-24 text-amber-950/20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="8" r="6"/><path d="M8.21 13.89L7 23l5-3 5 3-1.21-9.12"/>
         </svg>
 
-        <!-- 오른쪽 위: 배움의 전구와 학사모 -->
-        <svg class="absolute top-16 right-12 w-28 h-28 text-amber-950/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
-            <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A5 5 0 0 0 8 8c0 1.3.5 2.6 1.5 3.5.8.8 1.3 1.5 1.5 2.5M9 18h6M10 22h4"/>
-        </svg>
-        <svg class="absolute top-48 right-32 w-20 h-20 text-amber-950/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
-            <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
-            <path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5"/>
-        </svg>
-
-        <!-- 오른쪽 아래: 별 모양 및 돋보기 데코 -->
-        <svg class="absolute bottom-24 right-14 w-24 h-24 text-amber-950/35" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
-            <circle cx="11" cy="11" r="8"/>
-            <path d="m21 21-4.3-4.3"/>
-        </svg>
-        <svg class="absolute bottom-48 right-28 w-10 h-10 text-amber-950/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
-            <path d="m12 3-1.912 5.886H3.883l5.056 3.674L7.027 18.45 12 14.775l4.973 3.674-1.912-5.89 5.056-3.674h-6.205L12 3z"/>
+        <!-- 16. 클립 (상단 여백 채우기) -->
+        <svg class="absolute top-[12%] left-[65%] w-12 h-12 text-amber-950/30 rotate-45" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M7 8v8.8c0 3.3 2.7 6 6 6s6-2.7 6-6V6c0-2.2-1.8-4-4-4s-4 1.8-4 4v11c0 1.1.9 2 2 2s2-.9 2-2V8"/>
         </svg>
     </div>
 
@@ -213,8 +278,8 @@
             <div id="printPortraitGrid" class="shrink-0">
                 <!-- 동적으로 완벽 복제 렌더링된 인쇄 전용 그리드 드로잉 영역 -->
             </div>
-            <div class="flex-1 min-w-0" style="height: 105mm; display: flex; flex-direction: column;">
-                <h2 class="font-extrabold border-b border-black pb-0.5 mb-1 text-[9.5pt] tracking-tight text-black">단어 뜻 풀이</h2>
+            <div id="printPortraitRightSide" class="flex-1 min-w-0" style="height: 105mm; display: flex; flex-direction: column;">
+                <h2 id="printPortraitListTitle" class="font-extrabold border-b border-black pb-0.5 mb-1 text-[9.5pt] tracking-tight text-black">단어 뜻 풀이</h2>
                 <div id="printPortraitTopList" class="space-y-0.5 overflow-hidden flex-1">
                     <!-- 상단 영역 단어 매칭용 설명 리스트 동적 주입 -->
                 </div>
@@ -289,14 +354,19 @@
                         <i data-lucide="help-circle" class="w-3.5 h-3.5"></i> 엑셀 파일 기입 룰:
                     </div>
                     엑셀 파일의 <span class="font-bold text-emerald-800">A열(정답 단어)</span>, <span class="font-bold text-emerald-800">B열(기본 뜻풀이)</span>, <span class="font-bold text-emerald-800">C열(외국어 예문/역주)</span>을 채워서 올리면 나만의 맞춤 학습지가 구성됩니다!
+                    <div class="mt-1 text-emerald-800 bg-emerald-100/50 p-1.5 rounded border border-emerald-200/50">
+                        <i data-lucide="info" class="w-3 h-3 inline -mt-0.5"></i> <b>참고:</b> 단어가 50개를 초과할 경우, 50개 단위로 나뉘어 새 창에 게임이 자동 생성됩니다.
+                    </div>
                 </div>
 
                 <!-- 인쇄 옵션 영역 -->
                 <div class="flex flex-col gap-1.5 border-t pt-2">
                     <label class="text-[11px] font-bold text-amber-950">인쇄물 옵션:</label>
-                    <div class="flex items-center justify-between bg-gray-50 p-2 rounded-lg border border-gray-200">
-                        <span class="text-xs text-gray-600">시험지에 정답 표시</span>
-                        <input type="checkbox" id="printAnswerOption" class="rounded text-amber-600 focus:ring-amber-500 w-4 h-4 cursor-pointer">
+                    <div class="flex flex-col gap-1">
+                        <div class="flex items-center justify-between bg-gray-50 p-2 rounded-lg border border-gray-200">
+                            <span class="text-xs text-gray-600">시험지에 정답 표시</span>
+                            <input type="checkbox" id="printAnswerOption" class="rounded text-amber-600 focus:ring-amber-500 w-4 h-4 cursor-pointer">
+                        </div>
                     </div>
                 </div>
 
@@ -498,7 +568,28 @@
             // 게임 전체 로드 및 초기화 실행
             init() {
                 if (this.state.currentDataset.length === 0) {
-                    this.state.currentDataset = JSON.parse(JSON.stringify(this.DEFAULT_WORDS));
+                    // 새 창으로 넘어온 50개 초과 데이터가 있는지 확인
+                    if (window.__REMAINING_WORDS__ && window.__REMAINING_WORDS__.length > 0) {
+                        if (window.__REMAINING_WORDS__.length > 50) {
+                            this.state.currentDataset = window.__REMAINING_WORDS__.slice(0, 50);
+                            const nextRemaining = window.__REMAINING_WORDS__.slice(50);
+                            
+                            setTimeout(() => {
+                                this.showToast(`단어가 50개를 초과하여 50개만 불러옵니다. 나머지 ${nextRemaining.length}개는 새 창에서 열립니다.`, "success");
+                                setTimeout(() => {
+                                    this.openNewPageWithData(nextRemaining);
+                                }, 1500);
+                            }, 500);
+                        } else {
+                            this.state.currentDataset = window.__REMAINING_WORDS__;
+                            setTimeout(() => {
+                                this.showToast(`이전 파일에서 넘어온 나머지 ${this.state.currentDataset.length}개 단어입니다.`, "success");
+                            }, 500);
+                        }
+                        window.__REMAINING_WORDS__ = null; // 사용 후 초기화
+                    } else {
+                        this.state.currentDataset = JSON.parse(JSON.stringify(this.DEFAULT_WORDS));
+                    }
                 }
 
                 // 단어간 부분문자열 중복 포함 관계 유효성 검사 및 필터 가동
@@ -762,6 +853,7 @@
                 const container = document.getElementById('gridContainer');
                 container.innerHTML = '';
                 container.style.gridTemplateColumns = `repeat(${this.state.boardSize}, minmax(0, 1fr))`;
+                const fragment = document.createDocumentFragment(); // [최적화] DocumentFragment로 DOM 렌더링 비용 감소
 
                 for (let r = 0; r < this.state.boardSize; r++) {
                     for (let c = 0; c < this.state.boardSize; c++) {
@@ -778,9 +870,10 @@
                         cell.addEventListener('mouseenter', () => this.handleCellEnter(r, c));
                         cell.addEventListener('touchstart', (e) => this.handleTouchStart(r, c, e), {passive: false});
 
-                        container.appendChild(cell);
+                        fragment.appendChild(cell);
                     }
                 }
+                container.appendChild(fragment);
                 container.addEventListener('touchmove', (e) => this.handleTouchMove(e), {passive: false});
             },
 
@@ -788,6 +881,7 @@
             renderDescriptions() {
                 const container = document.getElementById('wordListContainer');
                 container.innerHTML = '';
+                const fragment = document.createDocumentFragment(); // [최적화] 일괄 삽입용 Fragment
 
                 this.state.currentDataset.forEach((item, index) => {
                     const matchedIdx = this.state.matchedPairs.findIndex(pair => pair.word === item.word.replace(/\s+/g, ''));
@@ -837,9 +931,10 @@
                         card.appendChild(rightControls);
                     }
                     
-                    container.appendChild(card);
+                    fragment.appendChild(card);
                 });
 
+                container.appendChild(fragment);
                 lucide.createIcons();
             },
 
@@ -849,6 +944,7 @@
                 if (!managerList) return;
 
                 managerList.innerHTML = '';
+                const fragment = document.createDocumentFragment(); // [최적화] 일괄 삽입용 Fragment
 
                 this.state.currentDataset.forEach((item, index) => {
                     const row = document.createElement('div');
@@ -862,8 +958,10 @@
                         <input type="text" id="editDesc1_${index}" value="${item.desc1 || ''}" placeholder="기본 뜻풀이 (설명 1)" class="w-full text-sm border border-gray-300 rounded-md px-2 py-1.5 focus:ring-1 focus:ring-amber-600 outline-none bg-white">
                         <input type="text" id="editDesc2_${index}" value="${item.desc2 || ''}" placeholder="외국어 예문 / 역주 (설명 2)" class="w-full text-xs text-gray-600 border border-gray-300 rounded-md px-2 py-1 focus:ring-1 focus:ring-amber-600 outline-none bg-white">
                     `;
-                    managerList.appendChild(row);
+                    fragment.appendChild(row);
                 });
+
+                managerList.appendChild(fragment);
 
                 const modal = document.getElementById('wordManagerModal');
                 modal.classList.remove('hidden');
@@ -993,12 +1091,24 @@
 
             updateGridVisuals() {
                 const cells = document.querySelectorAll('#gridContainer > div');
+                
+                // [최적화] O(1) 시간 복잡도로 셀 매칭 여부를 검색하기 위한 2D Lookup 배열 캐싱
+                const matchedMatrix = Array(this.state.boardSize).fill(null).map(() => Array(this.state.boardSize).fill(null));
+                this.state.matchedPairs.forEach(pair => {
+                    if (pair.coordinates) {
+                        pair.coordinates.forEach(coord => {
+                            matchedMatrix[coord.r][coord.c] = pair.colorIndex;
+                        });
+                    }
+                });
+
                 cells.forEach(cell => {
                     const r = parseInt(cell.dataset.row);
                     const c = parseInt(cell.dataset.col);
-                    const isMatched = this.isCellMatched(r, c);
-                    if (isMatched !== null) {
-                        const color = this.MATCH_COLORS[isMatched % this.MATCH_COLORS.length];
+                    const colorIdx = matchedMatrix[r][c]; // O(1) 검색 매칭 확인
+
+                    if (colorIdx !== null) {
+                        const color = this.MATCH_COLORS[colorIdx % this.MATCH_COLORS.length];
                         cell.className = "grid-cell flex items-center justify-center font-semibold text-lg md:text-xl border rounded-md cursor-pointer select-none aspect-square relative shadow-inner " + color.bg + " " + color.text + " " + color.border;
                     } else {
                         cell.className = "grid-cell flex items-center justify-center bg-white text-gray-800 font-semibold text-lg md:text-xl border border-gray-200/80 rounded-md cursor-pointer hover:bg-amber-100/50 transition-all duration-150 select-none aspect-square relative";
@@ -1027,17 +1137,31 @@
                 return null;
             },
 
+            // 정답 표시 옵션을 위해 퍼즐 보드 전체에 숨겨진 정답 색인 번호를 찾는 기능
+            getPrintAnswerColorIndex(r, c) {
+                for (let i = 0; i < this.state.placedWordLocations.length; i++) {
+                    const loc = this.state.placedWordLocations[i];
+                    const len = loc.word.length;
+                    for (let k = 0; k < len; k++) {
+                        if (loc.startR + loc.dr * k === r && loc.startC + loc.dc * k === c) {
+                            const dataIdx = this.state.currentDataset.findIndex(item => item.word.replace(/\s+/g, '') === loc.word);
+                            return dataIdx !== -1 ? dataIdx : i;
+                        }
+                    }
+                }
+                return null;
+            },
+
             endSelection() {
                 if (!this.state.isDrawing) return;
                 this.state.isDrawing = false;
                 if (this.state.selectedCells.length > 0) {
-                    const forwardWord = this.state.selectedCells.map(c => class { char; } ).map(c => c.char).join('');
-                    const forwardRealWord = this.state.selectedCells.map(c => c.char).join('');
+                    const forwardWord = this.state.selectedCells.map(c => c.char).join('');
                     const backwardWord = [...this.state.selectedCells].reverse().map(c => c.char).join('');
                     let matchedWord = null;
                     let usedCoords = [...this.state.selectedCells];
 
-                    if (this.state.gridWords.includes(forwardRealWord)) matchedWord = forwardRealWord;
+                    if (this.state.gridWords.includes(forwardWord)) matchedWord = forwardWord;
                     else if (this.state.gridWords.includes(backwardWord)) {
                         matchedWord = backwardWord;
                         usedCoords.reverse();
@@ -1141,6 +1265,7 @@
                         const workbook = XLSX.read(data, { type: 'binary' });
                         const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1 });
                         const parsedDataset = [];
+                        let hasOneCharWord = false;
                         
                         for (let i = 0; i < rows.length; i++) {
                             const row = rows[i];
@@ -1153,30 +1278,103 @@
                             word = word.replace(/[^a-zA-Z0-9가-힣\s]/g, '');
 
                             const checkLength = word.replace(/\s+/g, '').length;
-                            if (word && checkLength >= 2 && checkLength <= 8) {
+                            
+                            if (checkLength === 1) {
+                                hasOneCharWord = true;
+                            } else if (word && checkLength >= 2 && checkLength <= 8) {
                                 parsedDataset.push({ word, desc1, desc2 });
                             }
                         }
 
                         if (parsedDataset.length === 0) {
-                            this.showToast("올바른 단어 정보를 읽지 못했습니다. 엑셀의 A열에 올바른 정답 단어가 기입되었는지 확인해주세요.", "error");
+                            this.showToast("올바른 단어 정보를 읽지 못했습니다.", "error");
+                            if (hasOneCharWord) {
+                                setTimeout(() => this.showToast("1글자 단어는 퍼즐 규칙상 제외되었습니다.", "info"), 600);
+                            }
+                            e.target.value = ''; // 폼 초기화
                             return;
                         }
 
-                        this.state.currentDataset = parsedDataset;
-                        this.showToast("성공적으로 엑셀에서 " + this.state.currentDataset.length + "개의 질문 리스트를 가져왔습니다!", "success");
+                        if (hasOneCharWord) {
+                            setTimeout(() => {
+                                this.showToast("1글자 단어는 퍼즐 규칙상 자동 제외되었습니다.", "info");
+                            }, 600);
+                        }
+
+                        if (parsedDataset.length > 50) {
+                            const currentData = parsedDataset.slice(0, 50);
+                            const remainingData = parsedDataset.slice(50);
+                            
+                            this.state.currentDataset = currentData;
+                            this.showToast(`단어가 50개를 초과하여 50개만 불러옵니다. 나머지 ${remainingData.length}개는 새 창에서 열립니다.`, "success");
+                            
+                            setTimeout(() => {
+                                this.openNewPageWithData(remainingData);
+                            }, 1500);
+                        } else {
+                            this.state.currentDataset = parsedDataset;
+                            this.showToast("성공적으로 엑셀에서 " + this.state.currentDataset.length + "개의 질문 리스트를 가져왔습니다!", "success");
+                        }
                         
                         this.state.patternNumber = 1;
                         const input = document.getElementById('patternInput');
                         if (input) input.value = 1;
 
                         this.init();
+                        e.target.value = ''; // 폼 초기화
                     } catch (error) {
                         console.error(error);
                         this.showToast("엑셀 파일을 정상적으로 해독하지 못했습니다.", "error");
+                        e.target.value = '';
                     }
                 };
                 reader.readAsBinaryString(file);
+            },
+
+            openNewPageWithData(remainingData) {
+                const clone = document.documentElement.cloneNode(true);
+                
+                // 불필요한 상태 및 UI 초기화
+                const gridContainer = clone.querySelector('#gridContainer');
+                if (gridContainer) gridContainer.innerHTML = '';
+                const wordListContainer = clone.querySelector('#wordListContainer');
+                if (wordListContainer) wordListContainer.innerHTML = '';
+                const wordManagerList = clone.querySelector('#wordManagerList');
+                if (wordManagerList) wordManagerList.innerHTML = '';
+                
+                const menuDropdown = clone.querySelector('#menuDropdown');
+                if (menuDropdown) menuDropdown.classList.add('hidden');
+                const fileInput = clone.querySelector('#excelFile');
+                if (fileInput) fileInput.value = '';
+                
+                const toastContainer = clone.querySelector('#toastContainer');
+                if (toastContainer) toastContainer.innerHTML = '';
+
+                // 모달 닫기
+                const modal = clone.querySelector('#successModal');
+                if (modal) modal.classList.add('hidden');
+                const managerModal = clone.querySelector('#wordManagerModal');
+                if (managerModal) managerModal.classList.add('hidden');
+
+                // 기존에 주입된 데이터 스크립트가 있다면 제거
+                const oldScript = clone.querySelector('#injected-data-script');
+                if (oldScript) oldScript.remove();
+
+                // 남은 데이터 주입 (XSS 방지를 위해 < 문자를 이스케이프)
+                const safeData = JSON.stringify(remainingData).replace(/</g, '\\u003c');
+                const dataScript = document.createElement('script');
+                dataScript.id = 'injected-data-script';
+                dataScript.textContent = `window.__REMAINING_WORDS__ = ${safeData};`;
+                clone.querySelector('head').appendChild(dataScript);
+
+                const htmlStr = "<!DOCTYPE html>\n<html lang=\"ko\">\n" + clone.innerHTML + "\n</html>";
+                const blob = new Blob([htmlStr], { type: 'text/html' });
+                const url = URL.createObjectURL(blob);
+                
+                const newWin = window.open(url, '_blank');
+                if (!newWin) {
+                    this.showToast("팝업이 차단되어 나머지 페이지를 열 수 없습니다. 브라우저의 팝업 차단 설정을 해제해주세요.", "error");
+                }
             },
 
             // 세로(Portrait) 인쇄 최적화 드로잉 엔진 및 출력 전처리
@@ -1185,6 +1383,7 @@
                 document.getElementById('printMainTitle').innerText = mainTitleText;
 
                 const showAnswers = document.getElementById('printAnswerOption').checked;
+
                 if (showAnswers) {
                     document.body.classList.add('print-answers');
                 } else {
@@ -1202,6 +1401,9 @@
                 const bottomRightList = document.getElementById('printPortraitBottomRightList');
                 const printPortraitGrid = document.getElementById('printPortraitGrid');
                 const bottomArea = document.getElementById('printPortraitBottomArea');
+                const rightSideContainer = document.getElementById('printPortraitRightSide');
+                const listTitle = document.getElementById('printPortraitListTitle');
+                const printContainer = document.getElementById('printPortraitContainer');
 
                 if (!topList || !bottomLeftList || !bottomRightList || !printPortraitGrid || !bottomArea) return;
 
@@ -1210,44 +1412,47 @@
                 bottomRightList.innerHTML = '';
                 printPortraitGrid.innerHTML = '';
 
+                // 테마 제거 후 흑백 구조 유지
+                printContainer.classList.remove('bg-[#d9c4ad]', 'border-[6px]', 'border-[#bda084]', 'rounded-3xl', 'p-4', 'shadow-xl');
+                rightSideContainer.className = "flex-1 min-w-0 flex flex-col";
+                listTitle.className = "font-extrabold border-b border-black pb-0.5 mb-1 text-[9.5pt] tracking-tight text-black";
+                bottomArea.className = bottomArea.className.replace('border-t-2 border-gray-300/60', 'border-t-2 border-black');
+
                 // 이중 테두리로 삐져나오던 모서리 및 선 굵기 편차 문제를 100% 원천 해결하는 단일 결합 그리드 드로잉
                 const gridWrapper = document.createElement('div');
                 gridWrapper.style.width = "100%";
                 gridWrapper.style.height = "100%";
                 gridWrapper.style.display = "grid";
                 gridWrapper.style.gridTemplateColumns = `repeat(${this.state.boardSize}, minmax(0, 1fr))`;
-                gridWrapper.style.backgroundColor = "#ffffff"; // 완전 하얀 배경으로 이중색 번짐 원천 차단
                 gridWrapper.style.boxSizing = "border-box";
-                gridWrapper.style.border = "2px solid #000000"; // 고정식 외곽 테두리 (일정한 두께를 항상 유지)
-                gridWrapper.style.borderRadius = "3mm"; // 과하지 않고 수려하게 둥근 모서리 곡률 조정
                 gridWrapper.style.overflow = "hidden"; // 모서리 경계 셀의 바깥 영역 깔끔하게 클리핑
+
+                gridWrapper.style.backgroundColor = "transparent";
+                gridWrapper.style.padding = "0";
+                gridWrapper.style.gap = "0px";
+                gridWrapper.style.borderRadius = "3mm";
+                gridWrapper.style.border = "2px solid #000000";
 
                 for (let r = 0; r < this.state.boardSize; r++) {
                     for (let c = 0; c < this.state.boardSize; c++) {
                         const char = this.state.board[r][c];
                         const cell = document.createElement('div');
                         
-                        // font-medium 및 13pt 글씨 크기 고정으로 얇고 시원하게 표시
-                        cell.className = "grid-cell flex items-center justify-center font-medium text-[13pt] text-black";
                         cell.style.display = "flex";
                         cell.style.alignItems = "center";
                         cell.style.justifyContent = "center";
-                        cell.style.backgroundColor = "#ffffff";
                         cell.style.boxSizing = "border-box";
 
-                        // 틈새 검은 배경을 지우고, 개별 셀에 직접 우측/하단 선을 그림으로써 완벽히 정교한 바둑판선 완성
-                        if (c < this.state.boardSize - 1) {
-                            cell.style.borderRight = "1px solid #000000";
-                        }
-                        if (r < this.state.boardSize - 1) {
-                            cell.style.borderBottom = "1px solid #000000";
-                        }
+                        // 셀 흑백 실선 테두리 (배경은 투명하게 하여 배경 SVG가 보이도록)
+                        cell.className = "font-medium text-[13pt] text-black bg-transparent";
+                        if (c < this.state.boardSize - 1) cell.style.borderRight = "1px solid #000000";
+                        if (r < this.state.boardSize - 1) cell.style.borderBottom = "1px solid #000000";
 
                         // 정답 옵션 선택 시 연회색 음영 표시
                         if (showAnswers) {
-                            const isCellWord = this.isCellMatched(r, c);
-                            if (isCellWord !== null) {
-                                cell.style.backgroundColor = "#cbd5e1";
+                            const colorIdx = this.getPrintAnswerColorIndex(r, c);
+                            if (colorIdx !== null) {
+                                cell.style.backgroundColor = "rgba(203, 213, 225, 0.6)"; // 배경이 보이도록 투명도 있는 회색
                             }
                         }
 
@@ -1272,10 +1477,14 @@
                 const remaining = N - topCount;
                 const bottomLeftCount = Math.ceil(remaining / 2);
 
+                // [최적화] DOM Reflow 억제를 위한 임시 문자열 버퍼 생성
+                let topHTMLBuffer = '';
+                let bottomLeftHTMLBuffer = '';
+                let bottomRightHTMLBuffer = '';
+
                 this.state.currentDataset.forEach((item, index) => {
                     const answerHTML = showAnswers ? `<span class="word-answer">[정답: ${item.word}]</span>` : '';
-
-                    const itemHTML = `
+                    let itemHTML = `
                         <div class="portrait-list-item jp-font">
                             <div class="print-row-layout">
                                 <span class="word-number">${index + 1}.</span>
@@ -1287,13 +1496,17 @@
                     `;
 
                     if (index < topCount) {
-                        topList.innerHTML += itemHTML;
+                        topHTMLBuffer += itemHTML;
                     } else if (index < topCount + bottomLeftCount) {
-                        bottomLeftList.innerHTML += itemHTML;
+                        bottomLeftHTMLBuffer += itemHTML;
                     } else {
-                        bottomRightList.innerHTML += itemHTML;
+                        bottomRightHTMLBuffer += itemHTML;
                     }
                 });
+
+                topList.innerHTML = topHTMLBuffer;
+                bottomLeftList.innerHTML = bottomLeftHTMLBuffer;
+                bottomRightList.innerHTML = bottomRightHTMLBuffer;
             },
 
             // 화면 표시 전용 맞춤 토스트 디자인 알림창
