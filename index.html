@@ -328,7 +328,7 @@
         </div>
 
         <!-- [신규 기능] 인쇄용 우측 하단 게임번호 표시 레이어 -->
-        <div class="print-game-number">게임 번호: #<span id="printGameNumberVal">1</span></div>
+        <div class="print-game-number">단어 패턴 번호: #<span id="printGameNumberVal">1</span></div>
     </div>
 
     <!-- 상단 헤더 / 설정 바 -->
@@ -356,7 +356,7 @@
                 
                 <!-- 패턴 생성 패널 (그리드 레이아웃 고정으로 '적용' 버튼 튀어나옴 현상 완전 해결) -->
                 <div class="flex flex-col gap-1.5">
-                    <label class="text-[11px] font-bold text-amber-950">게임 번호:</label>
+                    <label class="text-[11px] font-bold text-amber-950">단어 패턴 번호:</label>
                     <div class="grid grid-cols-4 gap-1.5 w-full">
                         <input type="number" id="patternInput" step="1" min="1" value="1" class="col-span-3 text-center text-xs font-bold bg-gray-50 border border-gray-300 rounded-lg px-2 py-1.5 text-gray-800 focus:outline-none focus:ring-1 focus:ring-amber-600">
                         <button onclick="WordSearchGame.loadPattern()" class="col-span-1 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold py-1.5 rounded-lg shadow-sm transition-all text-center">적용</button>
@@ -365,7 +365,6 @@
 
                 <!-- [이관 배치] 햄버거 메뉴 내부의 단어 직접 수정 버튼 -->
                 <div class="flex flex-col gap-1.5">
-                    <label class="text-[11px] font-bold text-amber-950">단어 편집 기능:</label>
                     <button onclick="WordSearchGame.openWordListManager()" class="w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-amber-50 hover:bg-amber-100 text-amber-900 text-xs font-bold rounded-lg border border-amber-200 transition-all">
                         <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
                         <span>단어 및 뜻 직접 수정하기</span>
@@ -374,7 +373,6 @@
 
                 <!-- 엑셀 데이터 연동 -->
                 <div class="flex flex-col gap-1.5">
-                    <label class="text-[11px] font-bold text-amber-950">문제 등록:</label>
                     <label class="flex items-center justify-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium rounded-lg cursor-pointer shadow-sm duration-200">
                         <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i>
                         <span>엑셀 파일 불러오기</span>
@@ -395,10 +393,9 @@
 
                 <!-- 인쇄 옵션 영역 -->
                 <div class="flex flex-col gap-1.5 border-t pt-2">
-                    <label class="text-[11px] font-bold text-amber-950">인쇄물 옵션:</label>
                     <div class="flex flex-col gap-1">
                         <div class="flex items-center justify-between bg-gray-50 p-2 rounded-lg border border-gray-200">
-                            <span class="text-xs text-gray-600">학습지에 정답 표시</span>
+                            <span class="text-xs text-gray-600">학습지 인쇄 시 정답 표시</span>
                             <input type="checkbox" id="printAnswerOption" class="rounded text-amber-600 focus:ring-amber-500 w-4 h-4 cursor-pointer">
                         </div>
                     </div>
@@ -556,7 +553,7 @@
                 matchedPairs: [],
                 revealedHints: [],  // 초성 힌트 공개 여부 추적용
                 selectedListIndex: null,
-                patternNumber: 1,   // 1단위 게임 번호 관리 시스템
+                patternNumber: 1,   // 1단위 단어 패턴 번호 관리 시스템
                 rngSeed: 1,         // 현재 난수 발생 상태
                 placedWordLocations: [] // 정답 유일성 검출용 실제 단어 좌표 저장 장치
             },
@@ -674,12 +671,12 @@
                 const input = document.getElementById('patternInput');
                 let val = parseInt(input.value, 10);
                 if (isNaN(val) || val <= 0) {
-                    this.showToast("올바른 양수 게임 번호를 입력해주세요.", "error");
+                    this.showToast("올바른 양수 단어 패턴 번호를 입력해주세요.", "error");
                     return;
                 }
 
                 this.state.patternNumber = val;
-                this.showToast("게임 번호 " + val + "번을 성공적으로 불러왔습니다.", "success");
+                this.showToast("단어 패턴 번호 " + val + "번을 성공적으로 불러왔습니다.", "success");
                 this.init();
             },
 
@@ -1671,3 +1668,4 @@
     </script>
 </body>
 </html>
+
