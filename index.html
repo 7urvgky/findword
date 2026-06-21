@@ -86,8 +86,8 @@
 
         @media print {
             html, body {
-                height: 100% !important;
-                overflow: hidden !important;
+                height: auto !important; /* [완벽 해결] 인쇄 시 페이지 자동 늘어남 허용 */
+                overflow: visible !important; /* [완벽 해결] 잘림 현상 제거하고 멀티페이지 인쇄 복구 */
                 background: white !important;
                 color: black !important;
                 padding: 0 !important;
@@ -126,6 +126,12 @@
                 background: transparent !important;
             }
 
+            /* 인쇄용 우측 목록 영역의 강제 높이 제약 및 잘림 해제 */
+            #printPortraitRightSide {
+                height: 105mm !important;
+                overflow: hidden !important;
+            }
+
             /* [개선] 테두리 여백 설계 및 이중 곡률 겹침 오류 차단 */
             #printPortraitGrid {
                 width: 105mm !important;
@@ -140,29 +146,37 @@
             /* [개선] 인쇄물 단어 리스트 항목 스타일 지정 (가독성 확보, 행간 넓힘 적용) */
             .portrait-list-item {
                 border-bottom: 1px dashed #ccc !important;
-                padding: 1.2mm 0 !important; /* 패딩을 기존 1.5px에서 1.2mm로 늘려 행간을 보기 좋게 넓힘 */
-                line-height: 1.35 !important; /* 줄 높이를 1.2에서 1.35로 조정하여 가독성 향상 */
-                font-size: 8.5pt !important;
+                padding: 1mm 0 !important; /* 약간 타이트하게 보정하여 전체 높이 조화 달성 */
+                line-height: 1.32 !important; 
                 color: #000000 !important;
                 opacity: 100% !important;
+                page-break-inside: avoid !important; /* [완벽 해결] 단어 정보가 다음 페이지로 어정쩡하게 잘리는 현상 방지 */
             }
+
+            /* [완벽 해결] 단어 갯수별 동적 가변 폰트 클래스 바인딩 */
+            .print-size-small .portrait-list-item {
+                font-size: 7.5pt !important;
+            }
+            .print-size-medium .portrait-list-item {
+                font-size: 8.2pt !important;
+            }
+            .print-size-large .portrait-list-item {
+                font-size: 9pt !important;
+            }
+
             .portrait-list-item .word-number {
-                font-size: 8.5pt !important;
                 font-weight: bold !important;
                 color: #000000 !important;
             }
             .portrait-list-item .word-desc-1 {
-                font-size: 8.5pt !important;
                 font-weight: 500 !important;
                 color: #000000 !important;
             }
             /* 괄호로 감싸진 설명란은 더 연한 회색으로 적용 */
             .portrait-list-item .word-desc-2 {
-                font-size: 7.5pt !important;
-                color: #888888 !important;
+                color: #666666 !important;
             }
             .portrait-list-item .word-answer {
-                font-size: 7.5pt !important;
                 font-weight: bold !important;
                 color: #b91c1c !important;
             }
@@ -511,7 +525,7 @@
                 { word: "생각", desc1: "머리를 써서 헤아리는 일", desc2: "考え, 思考" },
                 { word: "정말", desc1: "참되고 거짓 없는 마음", desc2: "거짓이 아님, 眞情" },
                 { word: "정성", desc1: "온갖 힘을 다하려는 성실한 마음", desc2: "真心, 精一杯" },
-                { word: "선생님", desc1: "학생을 가르치는 사람", desc2: "先生" },
+                { word: "선생님", desc1: "학생을 가르치는 사람", desc2: "선생" },
                 { word: "루틴", desc1: "규칙적으로 하는 일의 순서", desc2: "Routine, 루틴" }
             ],
 
@@ -538,6 +552,7 @@
                 board: [],
                 selectedCells: [],
                 isDrawing: false,
+                clickStartCell: null, // 클릭식 선택 시작 칸 추적
                 matchedPairs: [],
                 revealedHints: [],  // 초성 힌트 공개 여부 추적용
                 selectedListIndex: null,
@@ -556,15 +571,12 @@
 
             // 하나의 정답 단어가 다른 정답 단어의 일부분(부분 문자열)이 되지 않도록 걸러내는 정밀 필터링 엔진
             filterSubstrings(dataset) {
-                // 단어 글자수 기준으로 내림차순(긴 순서대로) 정렬
                 const sorted = [...dataset].sort((a, b) => b.word.replace(/\s+/g, '').length - a.word.replace(/\s+/g, '').length);
                 const keep = [];
                 const removedWords = [];
 
                 for (const item of sorted) {
                     const strippedWord = item.word.replace(/\s+/g, '');
-                    
-                    // 이미 유지하기로 확정된 더 긴 단어 목록 중, 현재 단어(strippedWord)를 일부분으로 포함하는 단어가 있는지 전수 조사
                     const isPart = keep.some(acceptedItem => {
                         const acceptedStripped = acceptedItem.word.replace(/\s+/g, '');
                         return acceptedStripped.includes(strippedWord);
@@ -577,19 +589,16 @@
                     }
                 }
 
-                // 제거된 단어가 있을 경우 시각적인 토스트 피드백 알림 노출
                 if (removedWords.length > 0) {
                     this.showToast("단어 정합성 가이드: 다른 정답 단어의 일부로 포함되는 단어 [" + removedWords.join(", ") + "]가 자동 제외되었습니다.", "info");
                 }
 
-                // 원본의 상대적인 리스트 배치 순서를 지키기 위해 원본 배열 기준으로 survived된 항목만 필터링하여 리턴
                 return dataset.filter(item => keep.includes(item));
             },
 
             // 게임 전체 로드 및 초기화 실행
             init() {
                 if (this.state.currentDataset.length === 0) {
-                    // 새 창으로 넘어온 40개 초과 데이터가 있는지 확인
                     if (window.__REMAINING_WORDS__ && window.__REMAINING_WORDS__.length > 0) {
                         if (window.__REMAINING_WORDS__.length > 40) {
                             this.state.currentDataset = window.__REMAINING_WORDS__.slice(0, 40);
@@ -607,26 +616,23 @@
                                 this.showToast(`이전 파일에서 넘어온 나머지 ${this.state.currentDataset.length}개 단어입니다.`, "success");
                             }, 500);
                         }
-                        window.__REMAINING_WORDS__ = null; // 사용 후 초기화
+                        window.__REMAINING_WORDS__ = null;
                     } else {
                         this.state.currentDataset = JSON.parse(JSON.stringify(this.DEFAULT_WORDS));
                     }
                 }
 
-                // 단어간 부분문자열 중복 포함 관계 유효성 검사 및 필터 가동
                 this.state.currentDataset = this.filterSubstrings(this.state.currentDataset);
 
                 this.state.matchedPairs = [];
                 this.state.revealedHints = [];
                 this.state.selectedListIndex = null;
                 this.state.selectedCells = [];
+                this.state.clickStartCell = null;
                 this.state.isDrawing = false;
                 this.state.placedWordLocations = [];
 
-                // 시드 동기화 수행
                 this.state.rngSeed = this.state.patternNumber;
-
-                // 정답 단어 정제 (띄어쓰기 완전 무시)
                 this.state.gridWords = this.state.currentDataset.map(item => item.word.replace(/\s+/g, ''));
                 
                 this.calculateOptimalBoardSize();
@@ -637,7 +643,6 @@
                 this.updateProgress();
             },
 
-            // 상단 햄버거 드롭다운 토글
             toggleMenu() {
                 const dropdown = document.getElementById('menuDropdown');
                 if (dropdown) {
@@ -645,7 +650,6 @@
                 }
             },
 
-            // 외부 클릭 시 드롭다운 자동으로 닫기 처리
             registerOutsideClickListener() {
                 window.addEventListener('click', (e) => {
                     const dropdown = document.getElementById('menuDropdown');
@@ -655,10 +659,17 @@
                             dropdown.classList.add('hidden');
                         }
                     }
+                    
+                    // 퍼즐 판 영역 바깥 클릭 시 스마트 선택 하이라이트 초기화
+                    const gridContainer = document.getElementById('gridContainer');
+                    if (gridContainer && !gridContainer.contains(e.target)) {
+                        WordSearchGame.state.clickStartCell = null;
+                        WordSearchGame.state.selectedCells = [];
+                        WordSearchGame.updateGridVisuals();
+                    }
                 });
             },
 
-            // 패턴 강제 호출 시스템
             loadPattern() {
                 const input = document.getElementById('patternInput');
                 let val = parseInt(input.value, 10);
@@ -672,7 +683,6 @@
                 this.init();
             },
 
-            // 퍼즐 보드 크기 최적화 알고리즘
             calculateOptimalBoardSize() {
                 const wordCount = this.state.gridWords.length;
                 const maxLen = this.state.gridWords.reduce((max, w) => Math.max(max, w.length), 0);
@@ -681,30 +691,25 @@
                 if (wordCount <= 5) optimalSize = Math.max(8, maxLen + 1);
                 else if (wordCount <= 10) optimalSize = Math.max(10, maxLen + 2);
                 else if (wordCount <= 16) optimalSize = Math.max(12, maxLen + 2);
-                else optimalSize = Math.min(15, Math.max(14, maxLen + 3));
+                else if (wordCount <= 25) optimalSize = Math.max(13, maxLen + 3);
+                else optimalSize = Math.max(15, maxLen + 3);
 
-                this.state.boardSize = optimalSize;
+                // UI 레이아웃 안정성을 위해 최댓값은 15로 유지하면서 충분히 확보
+                this.state.boardSize = Math.min(15, optimalSize);
             },
 
-            // 한글 및 뜻풀이 내 한글 문자 세트 수집
             getFillerCharacters() {
                 let charSet = new Set();
-                
                 this.state.currentDataset.forEach(item => {
                     for (let char of item.word) {
-                        if (/[가-힣ㄱ-ㅎㅏ-ㅣ]/.test(char)) {
-                            charSet.add(char);
-                        }
+                        if (/[가-힣ㄱ-ㅎㅏ-ㅣ]/.test(char)) charSet.add(char);
                     }
                 });
-
                 this.state.currentDataset.forEach(item => {
                     [item.desc1, item.desc2].forEach(desc => {
                         if (desc) {
                             for (let char of desc) {
-                                if (/[가-힣ㄱ-ㅎㅏ-ㅣ]/.test(char)) {
-                                    charSet.add(char);
-                                }
+                                if (/[가-힣ㄱ-ㅎㅏ-ㅣ]/.test(char)) charSet.add(char);
                             }
                         }
                     });
@@ -712,18 +717,14 @@
 
                 if (charSet.size < 10) {
                     const fallback = "가나다라마바사아자차카타파하각난닫랄맘밥삿앙잦찿캌탓팦핳감남담람맘밤삼암잠참캄탐팡함갑납답랍맙밥삽압잡찹캅탑팝합강낭당랑망방상앙장창캉탕팡항";
-                    for (let c of fallback) {
-                        charSet.add(c);
-                    }
+                    for (let c of fallback) charSet.add(c);
                 }
-
                 return Array.from(charSet).join('');
             },
 
-            // 100% 단 하나의 정답 매칭만 형성되게 하는 중복 검출 필터링 모듈
             isValidFiller(r, c, char) {
                 const prevValue = this.state.board[r][c];
-                this.state.board[r][c] = char; // 가상 주입
+                this.state.board[r][c] = char;
 
                 const directions = [
                     { r: 0, c: 1 }, { r: 1, c: 0 }, { r: 1, c: 1 }, { r: -1, c: 1 },
@@ -734,18 +735,15 @@
 
                 for (let word of this.state.gridWords) {
                     const len = word.length;
-                    
                     for (let dir of directions) {
                         for (let k = 0; k < len; k++) {
                             const startR = r - dir.r * k;
                             const startC = c - dir.c * k;
 
-                            // 보드 범위 바깥 검사
                             if (startR >= 0 && startR < this.state.boardSize && startC >= 0 && startC < this.state.boardSize) {
                                 if (startR + dir.r * (len - 1) >= 0 && startR + dir.r * (len - 1) < this.state.boardSize &&
                                     startC + dir.c * (len - 1) >= 0 && startC + dir.c * (len - 1) < this.state.boardSize) {
                                     
-                                    // 단어 탐독
                                     let matched = true;
                                     for (let i = 0; i < len; i++) {
                                         if (this.state.board[startR + dir.r * i][startC + dir.c * i] !== word[i]) {
@@ -754,7 +752,6 @@
                                         }
                                     }
 
-                                    // 만약 단어가 완성되었다면, 그것이 우리가 본래 의도적으로 배치한 단어인지 대조 검증
                                     if (matched) {
                                         const isDeliberate = this.state.placedWordLocations.some(loc => {
                                             return loc.word === word && (
@@ -763,7 +760,6 @@
                                             );
                                         });
 
-                                        // 원래 배치한 정답이 아닌 가짜 조립 패턴이 우연히 발생했다면 배치 부적합 판정
                                         if (!isDeliberate) {
                                             isSafe = false;
                                             break;
@@ -777,26 +773,24 @@
                     if (!isSafe) break;
                 }
 
-                this.state.board[r][c] = prevValue; // 롤백
+                this.state.board[r][c] = prevValue;
                 return isSafe;
             },
 
-            // 단어 배치 로직 및 유일 솔루션 정밀 보증 장치
             buildWordSearchBoard() {
                 const size = this.state.boardSize;
                 this.state.board = Array(size).fill(null).map(() => Array(size).fill(''));
                 this.state.placedWordLocations = [];
 
-                // 단어 길이가 긴 순서대로 정렬하여 우선 배치
                 const sortedWords = [...this.state.gridWords].sort((a, b) => b.length - a.length);
                 const directions = [ { r: 0, c: 1 }, { r: 1, c: 0 }, { r: 1, c: 1 }, { r: -1, c: 1 } ];
-                
                 let unplacedWords = [];
 
                 sortedWords.forEach(word => {
                     let placed = false;
                     let attempts = 0;
-                    while (!placed && attempts < 150) {
+                    // 단어 간의 중복과 충돌을 막기 위해 시도 횟수를 300회로 넉넉하게 상향 조정
+                    while (!placed && attempts < 300) {
                         attempts++;
                         const dir = directions[Math.floor(this.seededRandom() * directions.length)];
                         const startRow = Math.floor(this.seededRandom() * size);
@@ -809,7 +803,8 @@
                             for (let i = 0; i < word.length; i++) {
                                 const r = startRow + dir.r * i;
                                 const c = startCol + dir.c * i;
-                                if (this.state.board[r][c] !== '' && this.state.board[r][c] !== word[i]) {
+                                // 단 한 글자라도 기존 배치된 타일과 겹치는 경우('선생님'의 '생' 등) 배치를 전면 허용하지 않음 (완벽 충돌 방지)
+                                if (this.state.board[r][c] !== '') {
                                     canPlace = false;
                                     break;
                                 }
@@ -821,38 +816,25 @@
                                     this.state.board[r][c] = word[i];
                                 }
                                 placed = true;
-                                
-                                // 의도된 실제 정답 단어 좌표 완전 기록
                                 this.state.placedWordLocations.push({
-                                    word: word,
-                                    startR: startRow,
-                                    startC: startCol,
-                                    endR: endRow,
-                                    endC: endCol,
-                                    dr: dir.r,
-                                    dc: dir.c
+                                    word: word, startR: startRow, startC: startCol, endR: endRow, endC: endCol, dr: dir.r, dc: dir.c
                                 });
                             }
                         }
                     }
-
-                    if (!placed) {
-                        unplacedWords.push(word);
-                    }
+                    if (!placed) unplacedWords.push(word);
                 });
 
                 if (unplacedWords.length > 0) {
-                    this.showToast("단어 개수가 많아 [" + unplacedWords.join(", ") + "]이(가) 배치공간 부족으로 퍼즐에서 누락되었습니다.", "error");
+                    this.showToast("일부 단어가 배치 공간 부족(비중복 설정)으로 퍼즐에서 제외되었습니다.", "error");
                 }
 
-                // 빈공간 한글 문자로 채울 때 복수 매칭 검출기 작동
                 const activeFiller = this.getFillerCharacters();
                 for (let r = 0; r < size; r++) {
                     for (let c = 0; c < size; c++) {
                         if (this.state.board[r][c] === '') {
                             let placedFiller = false;
                             let fillerAttempts = 0;
-                            // 우연한 단어가 발생하지 않도록 30회 난수 배치 시도
                             while (!placedFiller && fillerAttempts < 30) {
                                 fillerAttempts++;
                                 const candidate = activeFiller[Math.floor(this.seededRandom() * activeFiller.length)];
@@ -861,7 +843,6 @@
                                     placedFiller = true;
                                 }
                             }
-                            // 만약 예외 상황 발생 시 롤백용 임의 글자 주입 방어막
                             if (!placedFiller) {
                                 this.state.board[r][c] = activeFiller[Math.floor(this.seededRandom() * activeFiller.length)];
                             }
@@ -870,12 +851,11 @@
                 }
             },
 
-            // 그리드 렌더링
             renderBoard() {
                 const container = document.getElementById('gridContainer');
                 container.innerHTML = '';
                 container.style.gridTemplateColumns = `repeat(${this.state.boardSize}, minmax(0, 1fr))`;
-                const fragment = document.createDocumentFragment(); // [최적화] DocumentFragment로 DOM 렌더링 비용 감소
+                const fragment = document.createDocumentFragment();
 
                 for (let r = 0; r < this.state.boardSize; r++) {
                     for (let c = 0; c < this.state.boardSize; c++) {
@@ -887,7 +867,6 @@
                         cell.dataset.char = char;
                         cell.innerHTML = `<span>${char}</span>`;
 
-                        // 이벤트 바인딩
                         cell.addEventListener('mousedown', (e) => this.startSelection(r, c, e));
                         cell.addEventListener('mouseenter', () => this.handleCellEnter(r, c));
                         cell.addEventListener('touchstart', (e) => this.handleTouchStart(r, c, e), {passive: false});
@@ -899,11 +878,10 @@
                 container.addEventListener('touchmove', (e) => this.handleTouchMove(e), {passive: false});
             },
 
-            // 우측 설명 리스트 가독성 최적화 ([개선] 개별 edit 연필 버튼 완전 분리 이관, 패딩 수치 강화로 테두리선 잘림 완전 방지)
             renderDescriptions() {
                 const container = document.getElementById('wordListContainer');
                 container.innerHTML = '';
-                const fragment = document.createDocumentFragment(); // [최적화] 일괄 삽입용 Fragment
+                const fragment = document.createDocumentFragment();
 
                 this.state.currentDataset.forEach((item, index) => {
                     const matchedIdx = this.state.matchedPairs.findIndex(pair => pair.word === item.word.replace(/\s+/g, ''));
@@ -911,9 +889,8 @@
                     const matchColor = isMatched ? this.MATCH_COLORS[this.state.matchedPairs[matchedIdx].colorIndex % this.MATCH_COLORS.length] : null;
 
                     const card = document.createElement('div');
-                    card.id = `descCard_${index}`; // 스크롤 이동을 위한 고유 ID 부여
+                    card.id = `descCard_${index}`;
                     
-                    // px-4, py-3.5 여백을 고정 설계하여 selection 테두리가 찌그러지거나 잘리지 않음
                     let bgStyle = "bg-white border-2 border-transparent"; 
                     if (isMatched && matchColor) {
                         bgStyle = `${matchColor.bg} ${matchColor.border} border-2`;
@@ -951,7 +928,6 @@
                         checkIcon.innerHTML = `<i data-lucide="check-circle-2" class="w-4 h-4"></i>`;
                         rightControls.appendChild(checkIcon);
                     } else {
-                        // 미해결 문제일 경우 힌트 버튼 또는 자음 힌트 표시
                         const hintBtn = document.createElement('button');
                         if (this.state.revealedHints.includes(index)) {
                             hintBtn.className = "text-[12px] font-black tracking-widest text-amber-600 bg-amber-100 px-2 py-1.5 rounded-md cursor-pointer hover:bg-amber-200 border border-amber-200 shadow-inner transition-colors";
@@ -968,7 +944,6 @@
                     }
                     
                     card.appendChild(rightControls);
-                    
                     fragment.appendChild(card);
                 });
 
@@ -976,43 +951,38 @@
                 lucide.createIcons();
             },
 
-            // --- [신규 기능] 한글 자음(초성) 추출 및 힌트 토글 엔진 ---
             getInitialConsonants(word) {
                 const initials = ['ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'];
                 let result = '';
                 for (let i = 0; i < word.length; i++) {
                     const charCode = word.charCodeAt(i);
-                    // 한글 완성형 음절 범위 (가~힣)
                     if (charCode >= 0xAC00 && charCode <= 0xD7A3) { 
                         const initialIdx = Math.floor((charCode - 0xAC00) / 28 / 21);
                         result += initials[initialIdx];
                     } else {
-                        result += word[i]; // 영어나 숫자 등은 그대로 표기
+                        result += word[i];
                     }
                 }
                 return result;
             },
 
             toggleHint(index, e) {
-                e.stopPropagation(); // 뜻풀이 선택(강조) 이벤트와 겹치지 않게 방어
+                e.stopPropagation();
                 const hintIndex = this.state.revealedHints.indexOf(index);
                 if (hintIndex === -1) {
-                    // 힌트가 안 보여진 상태면 추가
                     this.state.revealedHints.push(index);
                 } else {
-                    // 이미 보여진 상태면 배열에서 제거하여 숨김
                     this.state.revealedHints.splice(hintIndex, 1);
                 }
-                this.renderDescriptions(); // 힌트가 토글된 상태로 UI 리렌더링
+                this.renderDescriptions();
             },
 
-            // --- [신규 개선] 햄버거 메뉴를 통해 작동하는 통합 단어 리스트 관리기 모듈 ---
             openWordListManager() {
                 const managerList = document.getElementById('wordManagerList');
                 if (!managerList) return;
 
                 managerList.innerHTML = '';
-                const fragment = document.createDocumentFragment(); // [최적화] 일괄 삽입용 Fragment
+                const fragment = document.createDocumentFragment();
 
                 this.state.currentDataset.forEach((item, index) => {
                     const row = document.createElement('div');
@@ -1060,7 +1030,6 @@
                     const desc1Input = document.getElementById(`editDesc1_${i}`).value.trim();
                     const desc2Input = document.getElementById(`editDesc2_${i}`).value.trim();
 
-                    // 입력값 유효성 검사 (특수문자 정제 포함)
                     wordInput = wordInput.replace(/[^a-zA-Z0-9가-힣\s]/g, '');
                     const cleanWordLen = wordInput.replace(/\s+/g, '').length;
 
@@ -1075,16 +1044,11 @@
                         break;
                     }
 
-                    newDataset.push({
-                        word: wordInput,
-                        desc1: desc1Input,
-                        desc2: desc2Input
-                    });
+                    newDataset.push({ word: wordInput, desc1: desc1Input, desc2: desc2Input });
                 }
 
-                if (hasError) return; // 하나라도 오류가 있으면 저장을 중단
+                if (hasError) return;
 
-                // 기존 데이터셋 교체 반영 후 게임판 재생성
                 this.state.currentDataset = newDataset;
                 this.showToast("모든 단어가 성공적으로 변경되어 퍼즐을 새로 구성합니다.", "success");
                 
@@ -1157,10 +1121,11 @@
                 }
             },
 
-            updateGridVisuals() {
+            // 덮어쓰기 문제 및 실패 피드백 충돌 문제를 완벽 차단하는 단일 렌더러
+            updateGridVisuals(failedCells = null) {
                 const cells = document.querySelectorAll('#gridContainer > div');
                 
-                // [최적화] O(1) 시간 복잡도로 셀 매칭 여부를 검색하기 위한 2D Lookup 배열 캐싱
+                // O(1) 매칭 상태 조회를 위한 2D Lookup 행렬 생성
                 const matchedMatrix = Array(this.state.boardSize).fill(null).map(() => Array(this.state.boardSize).fill(null));
                 this.state.matchedPairs.forEach(pair => {
                     if (pair.coordinates) {
@@ -1170,28 +1135,43 @@
                     }
                 });
 
+                // 현재 선택 중인 칸들을 Map 형태로 인덱싱
+                const selectedMap = {};
+                this.state.selectedCells.forEach(cell => {
+                    selectedMap[`${cell.r},${cell.c}`] = true;
+                });
+
                 cells.forEach(cell => {
                     const r = parseInt(cell.dataset.row);
                     const c = parseInt(cell.dataset.col);
-                    const colorIdx = matchedMatrix[r][c]; // O(1) 검색 매칭 확인
+                    const key = `${r},${c}`;
 
-                    if (colorIdx !== null) {
-                        const color = this.MATCH_COLORS[colorIdx % this.MATCH_COLORS.length];
-                        cell.className = "grid-cell flex items-center justify-center font-semibold text-lg md:text-xl border rounded-md cursor-pointer select-none aspect-square relative shadow-inner " + color.bg + " " + color.text + " " + color.border;
-                    } else {
-                        cell.className = "grid-cell flex items-center justify-center bg-white text-gray-800 font-semibold text-lg md:text-xl border border-gray-200/80 rounded-md cursor-pointer hover:bg-amber-100/50 transition-all duration-150 select-none aspect-square relative";
-                    }
-                });
+                    const isSelected = selectedMap[key];
+                    const isFailed = failedCells && failedCells.some(fc => fc.r === r && fc.c === c);
+                    const matchedColorIdx = matchedMatrix[r][c];
 
-                this.state.selectedCells.forEach((cellInfo) => {
-                    const cellElement = document.querySelector(`[data-row="${cellInfo.r}"][data-col="${cellInfo.c}"]`);
-                    if (cellElement) {
+                    let baseClass = "grid-cell flex items-center justify-center font-semibold text-lg md:text-xl border rounded-md cursor-pointer select-none aspect-square relative transition-all duration-150 ";
+
+                    // 상태 분기에 따른 유일한 스타일 강제 적용
+                    if (isFailed) {
+                        // 빨간색 실패 피드백
+                        cell.className = baseClass + "bg-red-500 text-white border-red-600 shadow-md scale-[0.98] z-20";
+                    } else if (isSelected) {
+                        // 현재 드래그 선택 중 피드백
                         if (this.state.selectedListIndex !== null) {
                             const colorIdx = this.state.selectedListIndex % this.MATCH_COLORS.length;
-                            cellElement.classList.add(this.MATCH_COLORS[colorIdx].bg, this.MATCH_COLORS[colorIdx].text, 'opacity-90');
+                            const color = this.MATCH_COLORS[colorIdx];
+                            cell.className = baseClass + color.bg + " " + color.text + " " + color.border + " opacity-90 scale-[1.05] z-10 shadow-md";
                         } else {
-                            cellElement.classList.add('bg-lime-200', 'text-lime-900');
+                            cell.className = baseClass + "bg-lime-400 text-lime-950 border-lime-500 scale-[1.05] z-10 shadow-md";
                         }
+                    } else if (matchedColorIdx !== null) {
+                        // 성공 완료 매칭 피드백
+                        const color = this.MATCH_COLORS[matchedColorIdx % this.MATCH_COLORS.length];
+                        cell.className = baseClass + "shadow-inner " + color.bg + " " + color.text + " " + color.border;
+                    } else {
+                        // 일반 기본 대기 상태
+                        cell.className = baseClass + "bg-white text-gray-800 border-gray-200/80 hover:bg-amber-100/50";
                     }
                 });
             },
@@ -1205,7 +1185,6 @@
                 return null;
             },
 
-            // 정답 표시 옵션을 위해 퍼즐 보드 전체에 숨겨진 정답 색인 번호를 찾는 기능
             getPrintAnswerColorIndex(r, c) {
                 for (let i = 0; i < this.state.placedWordLocations.length; i++) {
                     const loc = this.state.placedWordLocations[i];
@@ -1220,9 +1199,57 @@
                 return null;
             },
 
+            // 드래그와 클릭(스마트 터치 선택)을 공통 지원하는 입력 리스너
             endSelection() {
                 if (!this.state.isDrawing) return;
                 this.state.isDrawing = false;
+
+                if (this.state.selectedCells.length > 1) {
+                    // 1. 드래그를 통해 2칸 이상 선택한 경우 즉시 검증
+                    this.evaluateSelection();
+                } else if (this.state.selectedCells.length === 1) {
+                    // 2. 탭/클릭 선택 기법 (시작 글자 누른 후 다음 목적 글자를 탭해 연결)
+                    const clickedCell = this.state.selectedCells[0];
+                    if (this.state.clickStartCell) {
+                        const first = this.state.clickStartCell;
+                        const r = clickedCell.r;
+                        const c = clickedCell.c;
+                        const dr = r - first.r;
+                        const dc = c - first.c;
+                        const steps = Math.max(Math.abs(dr), Math.abs(dc));
+
+                        // 8방향 일직선 검증
+                        if ((dr === 0 || dc === 0 || Math.abs(dr) === Math.abs(dc)) && steps > 0) {
+                            this.state.selectedCells = [];
+                            const rStep = dr === 0 ? 0 : dr / steps;
+                            const cStep = dc === 0 ? 0 : dc / steps;
+                            for (let i = 0; i <= steps; i++) {
+                                const currR = first.r + rStep * i;
+                                const currC = first.c + cStep * i;
+                                this.state.selectedCells.push({ r: currR, c: currC, char: this.state.board[currR][currC] });
+                            }
+                            this.evaluateSelection();
+                        } else {
+                            // 방향이 안 맞으면 클릭한 새로운 칸을 시작칸으로 재설정
+                            this.state.clickStartCell = clickedCell;
+                            this.state.selectedCells = [clickedCell];
+                            this.updateGridVisuals();
+                        }
+                    } else {
+                        // 시작 지점 최초 마크
+                        this.state.clickStartCell = clickedCell;
+                        this.state.selectedCells = [clickedCell];
+                        this.updateGridVisuals();
+                    }
+                } else {
+                    this.state.selectedCells = [];
+                    this.state.clickStartCell = null;
+                    this.updateGridVisuals();
+                }
+            },
+
+            // 정답 검출 및 고대비 실패 피드백 렌더러 호출부
+            evaluateSelection() {
                 if (this.state.selectedCells.length > 0) {
                     const forwardWord = this.state.selectedCells.map(c => c.char).join('');
                     const backwardWord = [...this.state.selectedCells].reverse().map(c => c.char).join('');
@@ -1235,22 +1262,23 @@
                         usedCoords.reverse();
                     }
 
-                    if (matchedWord) this.handleWordDiscovered(matchedWord, usedCoords);
-                    else {
-                        this.state.selectedCells.forEach(cellInfo => {
-                            const cellElement = document.querySelector(`[data-row="${cellInfo.r}"][data-col="${cellInfo.c}"]`);
-                            if (cellElement) {
-                                cellElement.classList.add('bg-red-100', 'text-red-600');
-                                setTimeout(() => {
-                                    cellElement.classList.remove('bg-red-100', 'text-red-600');
-                                    this.updateGridVisuals();
-                                }, 300);
-                            }
-                        });
+                    if (matchedWord) {
+                        this.handleWordDiscovered(matchedWord, usedCoords);
+                        this.state.selectedCells = [];
+                        this.state.clickStartCell = null;
+                        this.updateGridVisuals();
+                    } else {
+                        // 실패 시 선택했던 모든 영역을 한눈에 식별할 수 있는 확실한 고대비 적색 테마 적용
+                        const failedList = [...this.state.selectedCells];
+                        this.state.selectedCells = [];
+                        this.state.clickStartCell = null;
+                        this.updateGridVisuals(failedList);
+
+                        setTimeout(() => {
+                            this.updateGridVisuals();
+                        }, 300);
                     }
                 }
-                this.state.selectedCells = [];
-                this.updateGridVisuals();
             },
 
             handleWordDiscovered(word, coordinates) {
@@ -1276,28 +1304,23 @@
                 this.updateGridVisuals();
                 this.updateProgress();
 
-                // 정답을 맞힌 단어 뜻풀이 위치로 부드럽게 스크롤 이동 (전체 화면 스크롤 방지 적용)
                 setTimeout(() => {
                     const matchedCard = document.getElementById(`descCard_${dataIndex}`);
                     const container = document.getElementById('wordListContainer');
                     if (matchedCard && container) {
-                        // 컨테이너 내부에서의 상대적인 위치를 직접 계산하여 컨테이너만 스크롤
                         const containerRect = container.getBoundingClientRect();
                         const cardRect = matchedCard.getBoundingClientRect();
                         const scrollPos = container.scrollTop + (cardRect.top - containerRect.top) - (containerRect.height / 2) + (cardRect.height / 2);
                         
-                        // 빠른 스크롤 애니메이션 직접 구현 (기본 smooth 보다 더 빠르게 설정)
                         const startPos = container.scrollTop;
                         const distance = scrollPos - startPos;
-                        const duration = 300; // 이동 시간 (ms 단위, 0.3초로 설정)
+                        const duration = 300; 
                         let startTime = null;
 
                         function animation(currentTime) {
                             if (startTime === null) startTime = currentTime;
                             const timeElapsed = currentTime - startTime;
                             const progress = Math.min(timeElapsed / duration, 1);
-                            
-                            // ease-out 효과 (점점 느려지는 자연스러운 감속)
                             const easeProgress = 1 - Math.pow(1 - progress, 3);
                             container.scrollTop = startPos + distance * easeProgress;
 
@@ -1321,7 +1344,6 @@
                 this.updateGridVisuals();
             },
 
-            // 엑셀 데이터 파일 검증 및 전처리 필터링 정밀화
             handleExcelUpload(e) {
                 const file = e.target.files[0];
                 if (!file) return;
@@ -1344,7 +1366,6 @@
                             const desc2 = row[2] ? String(row[2]).trim() : '';
                             
                             word = word.replace(/[^a-zA-Z0-9가-힣\s]/g, '');
-
                             const checkLength = word.replace(/\s+/g, '').length;
                             
                             if (checkLength === 1) {
@@ -1359,7 +1380,7 @@
                             if (hasOneCharWord) {
                                 setTimeout(() => this.showToast("1글자 단어는 퍼즐 규칙상 제외되었습니다.", "info"), 600);
                             }
-                            e.target.value = ''; // 폼 초기화
+                            e.target.value = '';
                             return;
                         }
 
@@ -1389,7 +1410,7 @@
                         if (input) input.value = 1;
 
                         this.init();
-                        e.target.value = ''; // 폼 초기화
+                        e.target.value = '';
                     } catch (error) {
                         console.error(error);
                         this.showToast("엑셀 파일을 정상적으로 해독하지 못했습니다.", "error");
@@ -1402,7 +1423,6 @@
             openNewPageWithData(remainingData) {
                 const clone = document.documentElement.cloneNode(true);
                 
-                // 불필요한 상태 및 UI 초기화
                 const gridContainer = clone.querySelector('#gridContainer');
                 if (gridContainer) gridContainer.innerHTML = '';
                 const wordListContainer = clone.querySelector('#wordListContainer');
@@ -1418,17 +1438,14 @@
                 const toastContainer = clone.querySelector('#toastContainer');
                 if (toastContainer) toastContainer.innerHTML = '';
 
-                // 모달 닫기
                 const modal = clone.querySelector('#successModal');
                 if (modal) modal.classList.add('hidden');
                 const managerModal = clone.querySelector('#wordManagerModal');
                 if (managerModal) managerModal.classList.add('hidden');
 
-                // 기존에 주입된 데이터 스크립트가 있다면 제거
                 const oldScript = clone.querySelector('#injected-data-script');
                 if (oldScript) oldScript.remove();
 
-                // 남은 데이터 주입 (XSS 방지를 위해 < 문자를 이스케이프)
                 const safeData = JSON.stringify(remainingData).replace(/</g, '\\u003c');
                 const dataScript = document.createElement('script');
                 dataScript.id = 'injected-data-script';
@@ -1445,12 +1462,10 @@
                 }
             },
 
-            // 세로(Portrait) 인쇄 최적화 드로잉 엔진 및 출력 전처리
             printWorksheet() {
                 const mainTitleText = document.getElementById('mainTitle').innerText;
                 document.getElementById('printMainTitle').innerText = mainTitleText;
 
-                // [신규 기능] 우측 하단 게임 번호 동적 주입
                 const printGameNumberVal = document.getElementById('printGameNumberVal');
                 if (printGameNumberVal) {
                     printGameNumberVal.innerText = this.state.patternNumber;
@@ -1468,7 +1483,6 @@
                 window.print();
             },
 
-            // 세로형 2단 그리드/리스트 뷰 복사 및 3분할 레이아웃 배치 알고리즘
             renderPrintPortraitView(showAnswers) {
                 const topList = document.getElementById('printPortraitTopList');
                 const bottomLeftList = document.getElementById('printPortraitBottomLeftList');
@@ -1487,10 +1501,21 @@
                 printPortraitGrid.innerHTML = '';
 
                 // 테마 제거 후 흑백 구조 유지
-                printContainer.classList.remove('bg-[#d9c4ad]', 'border-[6px]', 'border-[#bda084]', 'rounded-3xl', 'p-4', 'shadow-xl');
+                printContainer.className = "hidden"; // 기본 클래스 리셋
                 rightSideContainer.className = "flex-1 min-w-0 flex flex-col";
                 listTitle.className = "font-extrabold border-b border-black pb-0.5 mb-1 text-[9.5pt] tracking-tight text-black";
                 bottomArea.className = bottomArea.className.replace('border-t-2 border-gray-300/60', 'border-t-2 border-black');
+
+                // [완벽 해결] 단어 갯수 세밀 분석 후 가변 인쇄 폰트 클래스 주입
+                const N = this.state.currentDataset.length;
+                printContainer.classList.remove('print-size-small', 'print-size-medium', 'print-size-large');
+                if (N <= 12) {
+                    printContainer.classList.add('print-size-large');
+                } else if (N <= 24) {
+                    printContainer.classList.add('print-size-medium');
+                } else {
+                    printContainer.classList.add('print-size-small');
+                }
 
                 // 이중 테두리로 삐져나오던 모서리 및 선 굵기 편차 문제를 100% 원천 해결하는 단일 결합 그리드 드로잉
                 const gridWrapper = document.createElement('div');
@@ -1499,7 +1524,7 @@
                 gridWrapper.style.display = "grid";
                 gridWrapper.style.gridTemplateColumns = `repeat(${this.state.boardSize}, minmax(0, 1fr))`;
                 gridWrapper.style.boxSizing = "border-box";
-                gridWrapper.style.overflow = "hidden"; // 모서리 경계 셀의 바깥 영역 깔끔하게 클리핑
+                gridWrapper.style.overflow = "hidden";
 
                 gridWrapper.style.backgroundColor = "transparent";
                 gridWrapper.style.padding = "0";
@@ -1517,16 +1542,14 @@
                         cell.style.justifyContent = "center";
                         cell.style.boxSizing = "border-box";
 
-                        // 셀 흑백 실선 테두리 (배경은 투명하게 하여 배경 SVG가 보이도록)
                         cell.className = "font-medium text-[13pt] text-black bg-transparent";
                         if (c < this.state.boardSize - 1) cell.style.borderRight = "1px solid #000000";
                         if (r < this.state.boardSize - 1) cell.style.borderBottom = "1px solid #000000";
 
-                        // 정답 옵션 선택 시 연회색 음영 표시
                         if (showAnswers) {
                             const colorIdx = this.getPrintAnswerColorIndex(r, c);
                             if (colorIdx !== null) {
-                                cell.style.backgroundColor = "rgba(203, 213, 225, 0.6)"; // 배경이 보이도록 투명도 있는 회색
+                                cell.style.backgroundColor = "rgba(203, 213, 225, 0.6)";
                             }
                         }
 
@@ -1536,22 +1559,19 @@
                 }
                 printPortraitGrid.appendChild(gridWrapper);
 
-                // 2. 단어 개수에 따른 동적 영역 분할 시스템
-                const N = this.state.currentDataset.length;
-                const canFitAllInTop = N <= 14; 
+                // [완벽 해결] 단어 갯수 배분 임계치 최적화
+                // 그리드 바로 우측(105mm 높이 한계)에는 최적 가독성을 위해 딱 8개만 예쁘게 넣고, 나머지는 아래 2단 다단 영역으로 내려 잘림 완전 방지
                 let topCount = N;
-                
-                if (canFitAllInTop) {
+                if (N <= 10) {
                     bottomArea.classList.add('hidden'); // 하단 2단 완전 숨김
                 } else {
                     bottomArea.classList.remove('hidden'); // 하단 활성화
-                    topCount = Math.min(11, Math.ceil(N * 0.45)); // 상단 최적 개수 조절
+                    topCount = 8;
                 }
 
                 const remaining = N - topCount;
                 const bottomLeftCount = Math.ceil(remaining / 2);
 
-                // [최적화] DOM Reflow 억제를 위한 임시 문자열 버퍼 생성
                 let topHTMLBuffer = '';
                 let bottomLeftHTMLBuffer = '';
                 let bottomRightHTMLBuffer = '';
@@ -1583,7 +1603,6 @@
                 bottomRightList.innerHTML = bottomRightHTMLBuffer;
             },
 
-            // 화면 표시 전용 맞춤 토스트 디자인 알림창
             showToast(message, type = "info") {
                 const container = document.getElementById('toastContainer');
                 const toast = document.createElement('div');
@@ -1604,7 +1623,6 @@
 
             resetGame() {
                 this.closeSuccessModal();
-                
                 const nextPattern = Math.floor(Math.random() * 1000) + 1;
                 this.state.patternNumber = nextPattern;
                 
@@ -1633,25 +1651,20 @@
             }
         };
 
-        // DOM 트리 구축 시 초기화
         window.addEventListener('DOMContentLoaded', () => {
             lucide.createIcons();
             
-            // 임의의 1단위 초기 패턴 번호 생성
             const initialPattern = Math.floor(Math.random() * 1000) + 1;
             WordSearchGame.state.patternNumber = initialPattern;
             
             const input = document.getElementById('patternInput');
             if (input) input.value = initialPattern;
 
-            // 앱 로드 및 리스너 등록 실행
             WordSearchGame.init();
             WordSearchGame.registerOutsideClickListener();
 
-            // 엑셀 파일 수신기 바인딩
             document.getElementById('excelFile').addEventListener('change', (e) => WordSearchGame.handleExcelUpload(e));
             
-            // 마우스 해제 이벤트 전역 리스너 바인딩
             window.addEventListener('mouseup', () => WordSearchGame.endSelection());
             window.addEventListener('touchend', () => WordSearchGame.endSelection());
         });
