@@ -112,7 +112,7 @@
                 left: 0 !important;
                 width: 100vw !important;
                 height: 100vh !important;
-                opacity: 0.1 !important; /* 배경 투명도 조절 (0.1 = 10%) */
+                opacity: 0.25 !important; /* 배경 투명도 조절 (0.25로 변경) */
                 z-index: -1 !important;
             }
 
@@ -351,23 +351,14 @@
             <!-- 드롭다운 메뉴 아이템 영역 -->
             <div id="menuDropdown" class="hidden absolute right-0 mt-2 w-72 md:w-80 bg-white border border-gray-200 rounded-xl shadow-xl py-3 px-4 flex flex-col gap-3.5 z-30 transition-all">
                 <h3 class="text-xs font-bold text-gray-400 border-b pb-1.5 flex items-center gap-1">
-                    <i data-lucide="sliders" class="w-3.5 h-3.5"></i> 게임 및 출력 설정
+                    <i data-lucide="sliders" class="w-3.5 h-3.5"></i> 설정
                 </h3>
                 
-                <!-- 패턴 생성 패널 (그리드 레이아웃 고정으로 '적용' 버튼 튀어나옴 현상 완전 해결) -->
-                <div class="flex flex-col gap-1.5">
-                    <label class="text-[11px] font-bold text-amber-950">단어 패턴 번호:</label>
-                    <div class="grid grid-cols-4 gap-1.5 w-full">
-                        <input type="number" id="patternInput" step="1" min="1" value="1" class="col-span-3 text-center text-xs font-bold bg-gray-50 border border-gray-300 rounded-lg px-2 py-1.5 text-gray-800 focus:outline-none focus:ring-1 focus:ring-amber-600">
-                        <button onclick="WordSearchGame.loadPattern()" class="col-span-1 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold py-1.5 rounded-lg shadow-sm transition-all text-center">적용</button>
-                    </div>
-                </div>
-
-                <!-- [이관 배치] 햄버거 메뉴 내부의 단어 직접 수정 버튼 -->
+                <!-- [이관 배치] 햄버거 메뉴 내부의 문제 수정 버튼 -->
                 <div class="flex flex-col gap-1.5">
                     <button onclick="WordSearchGame.openWordListManager()" class="w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-amber-50 hover:bg-amber-100 text-amber-900 text-xs font-bold rounded-lg border border-amber-200 transition-all">
                         <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
-                        <span>단어 및 뜻 직접 수정하기</span>
+                        <span>문제 수정하기</span>
                     </button>
                 </div>
 
@@ -391,26 +382,49 @@
                     </div>
                 </div>
 
-                <!-- 인쇄 옵션 영역 -->
-                <div class="flex flex-col gap-1.5 border-t pt-2">
-                    <div class="flex flex-col gap-1">
-                        <div class="flex items-center justify-between bg-gray-50 p-2 rounded-lg border border-gray-200">
-                            <span class="text-xs text-gray-600">학습지 인쇄 시 정답 표시</span>
-                            <input type="checkbox" id="printAnswerOption" class="rounded text-amber-600 focus:ring-amber-500 w-4 h-4 cursor-pointer">
-                        </div>
+                <!-- 패턴 생성 패널 (AI 생성 위쪽으로 이동) -->
+                <div class="flex flex-col gap-1.5 border-t pt-3 mt-1">
+                    <label class="text-[11px] font-bold text-amber-950">단어 패턴 번호:</label>
+                    <div class="grid grid-cols-4 gap-1.5 w-full">
+                        <input type="number" id="patternInput" step="1" min="1" value="1" class="col-span-3 text-center text-xs font-bold bg-gray-50 border border-gray-300 rounded-lg px-2 py-1.5 text-gray-800 focus:outline-none focus:ring-1 focus:ring-amber-600">
+                        <button onclick="WordSearchGame.loadPattern()" class="col-span-1 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold py-1.5 rounded-lg shadow-sm transition-all text-center">적용</button>
                     </div>
                 </div>
 
-                <!-- 인쇄 실행 및 리셋 액션 버튼 -->
-                <div class="grid grid-cols-2 gap-2 border-t pt-3">
-                    <button onclick="WordSearchGame.printWorksheet(); WordSearchGame.toggleMenu();" class="flex items-center justify-center gap-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-sm transition-all">
-                        <i data-lucide="printer" class="w-3.5 h-3.5"></i>
-                        <span>인쇄하기</span>
-                    </button>
-                    <button onclick="WordSearchGame.resetGame(); WordSearchGame.toggleMenu();" class="flex items-center justify-center gap-1 px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white text-xs font-medium rounded-lg transition-all">
-                        <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
-                        <span>새 게임</span>
-                    </button>
+                <!-- AI 문제 자동 생성 기능 (단어 패턴 번호 밑으로 배치) -->
+                <div class="flex flex-col gap-1.5 border-t border-purple-100 pt-3 mt-1">
+                    <label class="text-[11px] font-bold text-purple-900 flex items-center gap-1">
+                        <i data-lucide="sparkles" class="w-3.5 h-3.5 text-purple-600"></i> AI 단어장 자동 생성:
+                    </label>
+                    <input type="text" id="aiTopicInput" placeholder="주제 입력 (예: 우주, 역사)" class="w-full text-xs border border-purple-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-purple-600 bg-purple-50/30">
+                    <div class="flex gap-1.5 items-center mt-0.5">
+                        <span class="text-[11px] text-purple-800 shrink-0 font-medium">단어 수:</span>
+                        <input type="number" id="aiCountInput" value="12" min="5" max="30" class="w-14 text-center text-xs font-bold border border-purple-200 rounded-lg px-1.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-purple-600 bg-purple-50/30">
+                        <button onclick="WordSearchGame.generateWithAI()" id="aiGenerateBtn" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-lg px-3 py-1.5 shadow-sm transition-all flex items-center justify-center gap-1">
+                            생성
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 인쇄 영역 소그룹 (간격을 줄이기 위해 인쇄 버튼 행과 정답 표시 행을 하나의 Flex 그룹으로 묶음) -->
+                <div class="flex flex-col gap-2 border-t pt-3">
+                    <!-- 인쇄 실행 및 리셋 액션 버튼 -->
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="WordSearchGame.printWorksheet(); WordSearchGame.toggleMenu();" class="flex items-center justify-center gap-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-sm transition-all">
+                            <i data-lucide="printer" class="w-3.5 h-3.5"></i>
+                            <span>인쇄하기</span>
+                        </button>
+                        <button onclick="WordSearchGame.resetGame(); WordSearchGame.toggleMenu();" class="flex items-center justify-center gap-1 px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white text-xs font-medium rounded-lg transition-all">
+                            <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                            <span>새 게임</span>
+                        </button>
+                    </div>
+
+                    <!-- 인쇄 옵션 영역 -->
+                    <div class="flex items-center justify-between px-1">
+                        <span class="text-xs text-gray-600 font-medium">학습지 인쇄 시 정답 표시</span>
+                        <input type="checkbox" id="printAnswerOption" class="rounded text-amber-600 focus:ring-amber-500 w-4 h-4 cursor-pointer">
+                    </div>
                 </div>
             </div>
         </div>
@@ -497,7 +511,14 @@
                 <!-- JS 단어 관리 아이템 동적 바인딩 -->
             </div>
 
-            <div class="flex gap-2 mt-5 pt-3 border-t shrink-0">
+            <!-- 새 단어 추가 버튼 추가 -->
+            <div class="pt-2 pb-1 flex justify-center shrink-0">
+                 <button onclick="WordSearchGame.addEmptyWordRow()" class="flex items-center justify-center gap-1.5 text-xs font-bold text-amber-700 hover:text-amber-800 bg-amber-50 hover:bg-amber-100 px-4 py-2 rounded-full border border-amber-200 transition-colors w-full border-dashed">
+                      <i data-lucide="plus" class="w-4 h-4"></i> 새 항목 추가하기
+                 </button>
+            </div>
+
+            <div class="flex gap-2 mt-3 pt-3 border-t shrink-0">
                 <button onclick="WordSearchGame.saveAllEditedWords()" class="flex-1 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl shadow-md transition-all text-sm">
                     저장하기
                 </button>
@@ -982,18 +1003,7 @@
                 const fragment = document.createDocumentFragment();
 
                 this.state.currentDataset.forEach((item, index) => {
-                    const row = document.createElement('div');
-                    row.className = "flex flex-col p-3 bg-gray-50 border border-gray-200 rounded-xl gap-2 hover:bg-amber-50/50 transition-all";
-
-                    row.innerHTML = `
-                        <div class="flex items-center gap-2">
-                            <span class="text-[10px] text-amber-950 font-black bg-amber-100 px-1.5 py-0.5 rounded-md">${index + 1}</span>
-                            <input type="text" id="editWord_${index}" value="${item.word}" placeholder="정답 단어 (2~8글자)" class="flex-1 text-sm font-bold text-amber-950 border border-gray-300 rounded-md px-2 py-1.5 focus:ring-1 focus:ring-amber-600 outline-none bg-white">
-                        </div>
-                        <input type="text" id="editDesc1_${index}" value="${item.desc1 || ''}" placeholder="기본 뜻풀이 (설명 1)" class="w-full text-sm border border-gray-300 rounded-md px-2 py-1.5 focus:ring-1 focus:ring-amber-600 outline-none bg-white">
-                        <input type="text" id="editDesc2_${index}" value="${item.desc2 || ''}" placeholder="외국어 예문 / 역주 (설명 2)" class="w-full text-xs text-gray-600 border border-gray-300 rounded-md px-2 py-1 focus:ring-1 focus:ring-amber-600 outline-none bg-white">
-                    `;
-                    fragment.appendChild(row);
+                    fragment.appendChild(this.createWordManagerRow(item, index));
                 });
 
                 managerList.appendChild(fragment);
@@ -1009,6 +1019,69 @@
                 lucide.createIcons();
             },
 
+            createWordManagerRow(item, index) {
+                const row = document.createElement('div');
+                row.className = "word-edit-row flex flex-col p-3 bg-gray-50 border border-gray-200 rounded-xl gap-2 hover:bg-amber-50/50 transition-all relative";
+                row.innerHTML = `
+                    <div class="flex items-center gap-2 pr-6">
+                        <span class="row-index-badge text-[10px] text-amber-950 font-black bg-amber-100 px-1.5 py-0.5 rounded-md">${index + 1}</span>
+                        <!-- 위/아래 순서 변경 버튼 세트 추가 -->
+                        <div class="flex items-center gap-0.5 shrink-0">
+                            <button onclick="WordSearchGame.moveRowUp(this)" class="p-1 text-gray-400 hover:text-amber-800 hover:bg-amber-100 rounded transition-colors focus:outline-none" title="위로 이동">
+                                <i data-lucide="chevron-up" class="w-3.5 h-3.5"></i>
+                            </button>
+                            <button onclick="WordSearchGame.moveRowDown(this)" class="p-1 text-gray-400 hover:text-amber-800 hover:bg-amber-100 rounded transition-colors focus:outline-none" title="아래로 이동">
+                                <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </div>
+                        <input type="text" value="${item.word || ''}" placeholder="정답 단어 (2~8글자)" class="edit-word flex-1 text-sm font-bold text-amber-950 border border-gray-300 rounded-md px-2 py-1.5 focus:ring-1 focus:ring-amber-600 outline-none bg-white">
+                    </div>
+                    <input type="text" value="${item.desc1 || ''}" placeholder="기본 뜻풀이 (설명 1)" class="edit-desc1 w-full text-sm border border-gray-300 rounded-md px-2 py-1.5 focus:ring-1 focus:ring-amber-600 outline-none bg-white">
+                    <input type="text" value="${item.desc2 || ''}" placeholder="외국어 예문 / 역주 (설명 2)" class="edit-desc2 w-full text-xs text-gray-600 border border-gray-300 rounded-md px-2 py-1 focus:ring-1 focus:ring-amber-600 outline-none bg-white">
+                    <button onclick="this.parentElement.remove(); WordSearchGame.updateManagerRowIndices();" class="absolute top-3 right-3 text-gray-400 hover:text-red-500 focus:outline-none" title="삭제">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>
+                `;
+                return row;
+            },
+
+            // 수정 창 내의 순서를 위로 1칸 변경하는 함수
+            moveRowUp(btn) {
+                const row = btn.closest('.word-edit-row');
+                const prev = row.previousElementSibling;
+                if (prev && prev.classList.contains('word-edit-row')) {
+                    row.parentNode.insertBefore(row, prev);
+                    this.updateManagerRowIndices();
+                }
+            },
+
+            // 수정 창 내의 순서를 아래로 1칸 변경하는 함수
+            moveRowDown(btn) {
+                const row = btn.closest('.word-edit-row');
+                const next = row.nextElementSibling;
+                if (next && next.classList.contains('word-edit-row')) {
+                    row.parentNode.insertBefore(next, row);
+                    this.updateManagerRowIndices();
+                }
+            },
+
+            addEmptyWordRow() {
+                const managerList = document.getElementById('wordManagerList');
+                const index = managerList.querySelectorAll('.word-edit-row').length;
+                const newRow = this.createWordManagerRow({word: '', desc1: '', desc2: ''}, index);
+                managerList.appendChild(newRow);
+                lucide.createIcons();
+                // 새로 추가된 요소가 보이도록 스크롤 아래로 내리기
+                setTimeout(() => { managerList.scrollTop = managerList.scrollHeight; }, 50);
+            },
+
+            updateManagerRowIndices() {
+                const badges = document.querySelectorAll('#wordManagerList .row-index-badge');
+                badges.forEach((badge, idx) => {
+                    badge.innerText = idx + 1;
+                });
+            },
+
             closeWordListManager() {
                 const modal = document.getElementById('wordManagerModal');
                 modal.classList.remove('opacity-100');
@@ -1019,24 +1092,25 @@
 
             saveAllEditedWords() {
                 const newDataset = [];
-                const total = this.state.currentDataset.length;
+                const rows = document.querySelectorAll('#wordManagerList .word-edit-row');
                 let hasError = false;
 
-                for (let i = 0; i < total; i++) {
-                    let wordInput = document.getElementById(`editWord_${i}`).value.trim();
-                    const desc1Input = document.getElementById(`editDesc1_${i}`).value.trim();
-                    const desc2Input = document.getElementById(`editDesc2_${i}`).value.trim();
+                for (let i = 0; i < rows.length; i++) {
+                    const row = rows[i];
+                    let wordInput = row.querySelector('.edit-word').value.trim();
+                    const desc1Input = row.querySelector('.edit-desc1').value.trim();
+                    const desc2Input = row.querySelector('.edit-desc2').value.trim();
 
                     wordInput = wordInput.replace(/[^a-zA-Z0-9가-힣\s]/g, '');
                     const cleanWordLen = wordInput.replace(/\s+/g, '').length;
 
                     if (!wordInput || cleanWordLen < 2 || cleanWordLen > 8) {
-                        this.showToast(`${i + 1}번 단어 오류: 정답 단어는 공백 제외 한글/영문 2~8글자 내외로 입력해주세요.`, "error");
+                        this.showToast(`${i + 1}번째 단어 오류: 정답 단어는 공백 제외 한글/영문 2~8글자 내외로 입력해주세요.`, "error");
                         hasError = true;
                         break;
                     }
                     if (!desc1Input) {
-                        this.showToast(`${i + 1}번 단어 오류: 기본 뜻풀이(설명 1)는 필수 항목입니다.`, "error");
+                        this.showToast(`${i + 1}번째 단어 오류: 기본 뜻풀이(설명 1)는 필수 항목입니다.`, "error");
                         hasError = true;
                         break;
                     }
@@ -1045,6 +1119,11 @@
                 }
 
                 if (hasError) return;
+                
+                if (newDataset.length === 0) {
+                    this.showToast("저장할 단어가 없습니다. 최소 1개 이상 추가해주세요.", "error");
+                    return;
+                }
 
                 this.state.currentDataset = newDataset;
                 this.showToast("모든 단어가 성공적으로 변경되어 퍼즐을 새로 구성합니다.", "success");
@@ -1459,6 +1538,132 @@
                 }
             },
 
+            // 구글 Gemini AI를 활용한 주제 기반 단어 자동 생성 시스템
+            async generateWithAI() {
+                const topicInput = document.getElementById('aiTopicInput');
+                const topic = topicInput.value.trim();
+                const countInput = document.getElementById('aiCountInput');
+                const count = parseInt(countInput.value, 10) || 12;
+
+                if (!topic) {
+                    this.showToast("생성할 단어장의 주제를 먼저 입력해주세요.", "error");
+                    return;
+                }
+                if (count < 5 || count > 30) {
+                    this.showToast("단어 수는 5개에서 30개 사이로 설정해주세요.", "error");
+                    return;
+                }
+
+                const btn = document.getElementById('aiGenerateBtn');
+                const originalBtnHTML = btn.innerHTML;
+                btn.innerHTML = `<i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i> 생성 중...`;
+                btn.disabled = true;
+                lucide.createIcons();
+
+                const apiKey = "";
+                const prompt = `당신은 교육용 단어 찾기 퍼즐 출제자입니다. 사용자가 입력한 주제에 맞는 유익한 한국어 단어 ${count}개를 생성해주세요.
+                주제: "${topic}"
+
+                규칙:
+                1. word: 정답 단어 (반드시 띄어쓰기 없는 2~8글자 한국어 명사 위주)
+                2. desc1: 그 단어의 뜻풀이나 설명 (한국어)
+                3. desc2: 그 단어의 영어 번역이나 간단한 추가 설명
+                반드시 아래 JSON 형식으로 응답하세요.
+                {"words": [{"word": "단어", "desc1": "설명", "desc2": "추가설명"}]}`;
+
+                const payload = {
+                    contents: [{ parts: [{ text: prompt }] }],
+                    generationConfig: {
+                        responseMimeType: "application/json",
+                        responseSchema: {
+                            type: "OBJECT",
+                            properties: {
+                                words: {
+                                    type: "ARRAY",
+                                    items: {
+                                        type: "OBJECT",
+                                        properties: {
+                                            word: { type: "STRING" },
+                                            desc1: { type: "STRING" },
+                                            desc2: { type: "STRING" }
+                                        },
+                                        required: ["word", "desc1"]
+                                    }
+                                }
+                            },
+                            required: ["words"]
+                        }
+                    },
+                    systemInstruction: { parts: [{ text: "You are a helpful assistant that generates educational word puzzles in JSON format." }] }
+                };
+
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+
+                let success = false;
+                let resultData = null;
+                const delays = [1000, 2000, 4000, 8000, 16000];
+
+                // 지수 백오프 기반 재시도 로직을 통해 안정적인 응답 보장
+                for (let i = 0; i < 6; i++) {
+                    try {
+                        const response = await fetch(url, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+
+                        if (!response.ok) throw new Error("API request failed");
+
+                        const data = await response.json();
+                        let jsonText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                        
+                        if (jsonText) {
+                            // 마크다운 블록(```json)이 섞여 나올 경우를 대비한 정제 코드
+                            jsonText = jsonText.replace(/```json/gi, '').replace(/```/g, '').trim();
+                            const parsedData = JSON.parse(jsonText);
+                            
+                            // 스키마를 최상위 객체(OBJECT)로 변경하여 파싱 안정성 극대화
+                            if (parsedData && parsedData.words && parsedData.words.length > 0) {
+                                resultData = parsedData.words;
+                                success = true;
+                                break;
+                            } else {
+                                throw new Error("Invalid Array format");
+                            }
+                        } else {
+                            throw new Error("Invalid response format");
+                        }
+                    } catch (error) {
+                        if (i < 5) {
+                            await new Promise(resolve => setTimeout(resolve, delays[i]));
+                        } else {
+                            console.error("AI Generation Error:", error);
+                            break;
+                        }
+                    }
+                }
+
+                btn.innerHTML = originalBtnHTML;
+                btn.disabled = false;
+                lucide.createIcons();
+
+                if (success && resultData && resultData.length > 0) {
+                    this.state.currentDataset = resultData;
+                    this.state.patternNumber = 1;
+                    const pInput = document.getElementById('patternInput');
+                    if (pInput) pInput.value = 1;
+                    
+                    document.getElementById('mainTitle').innerText = `${topic} 단어 찾기`;
+
+                    this.init();
+                    this.showToast(`'${topic}' 주제로 AI 단어장이 성공적으로 생성되었습니다!`, "success");
+                    this.toggleMenu();
+                    topicInput.value = '';
+                } else {
+                    this.showToast("AI 생성에 실패했습니다. 잠시 후 다시 시도해주세요.", "error");
+                }
+            },
+
             printWorksheet() {
                 const mainTitleText = document.getElementById('mainTitle').innerText;
                 document.getElementById('printMainTitle').innerText = mainTitleText;
@@ -1668,4 +1873,3 @@
     </script>
 </body>
 </html>
-
